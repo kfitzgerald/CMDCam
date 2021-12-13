@@ -1,9 +1,9 @@
 package team.creative.cmdcam.client;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -47,8 +47,11 @@ public class CMDCamClient {
     public static ArrayList<CamPoint> points = new ArrayList<>();
     
     public static double cameraFollowSpeed = 1D;
+
+    public static boolean enableGuiOnTravel = true;
+    public static boolean grabMouseOnTravel = false;
     
-    public static HashMap<String, CamPath> savedPaths = new HashMap<>();
+    public static ClientConfiguration storage = new ClientConfiguration();
     
     public static boolean isInstalledOnSever = false;
     
@@ -56,6 +59,7 @@ public class CMDCamClient {
     
     public static void init(FMLClientSetupEvent event) {
         MinecraftForge.EVENT_BUS.register(new CamEventHandlerClient());
+        storage.load();
         mc = Minecraft.getInstance();
         KeyHandler.initKeys();
         event.enqueueWork(() -> {
@@ -91,7 +95,13 @@ public class CMDCamClient {
                 mc.player
                         .sendMessage(new TextComponent("" + ChatFormatting.BOLD + ChatFormatting.YELLOW + "/cam load <name> " + ChatFormatting.RED + "tries to load the saved path with the given name"), Util.NIL_UUID);
                 mc.player
+                        .sendMessage(new TextComponent("" + ChatFormatting.BOLD + ChatFormatting.YELLOW + "/cam reload" + ChatFormatting.RED + "tries to reload the saved paths from disk"), Util.NIL_UUID);
+                mc.player
                         .sendMessage(new TextComponent("" + ChatFormatting.BOLD + ChatFormatting.YELLOW + "/cam list " + ChatFormatting.RED + "lists all saved paths"), Util.NIL_UUID);
+                mc.player
+                        .sendMessage(new TextComponent("" + ChatFormatting.BOLD + ChatFormatting.YELLOW + "/cam gui <true|false>" + ChatFormatting.RED + "Enables (true) or disables (false) the GUI while traveling"), Util.NIL_UUID);
+                mc.player
+                        .sendMessage(new TextComponent("" + ChatFormatting.BOLD + ChatFormatting.YELLOW + "/cam mouse <true|false>" + ChatFormatting.RED + "Locks the mouse (true) or not (false) while traveling"), Util.NIL_UUID);
                 return 0;
             }).then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("clear").executes((x) -> { // cam clear
                 mc.player.sendMessage(new TextComponent("Cleared all registered points!"), Util.NIL_UUID);
@@ -253,8 +263,8 @@ public class CMDCamClient {
                             mc.player.sendMessage(new TextComponent("Use /cam-server list instead!"), Util.NIL_UUID);
                             return 0;
                         }
-                        String output = "There are " + CMDCamClient.savedPaths.size() + " path(s) in total. ";
-                        for (String key : CMDCamClient.savedPaths.keySet()) {
+                        String output = "There are " + CMDCamClient.storage.paths.size() + " path(s) in total. ";
+                        for (String key : CMDCamClient.storage.paths.keySet()) {
                             output += key + ", ";
                         }
                         mc.player.sendMessage(new TextComponent(output), Util.NIL_UUID);
@@ -265,7 +275,7 @@ public class CMDCamClient {
                                 if (CMDCamClient.isInstalledOnSever) {
                                     CMDCam.NETWORK.sendToServer(new GetPathPacket(pathArg));
                                 } else {
-                                    CamPath path = CMDCamClient.savedPaths.get(pathArg);
+                                    CamPath path = CMDCamClient.storage.paths.get(pathArg);
                                     if (path != null) {
                                         path.overwriteClientConfig();
                                         mc.player.sendMessage(new TextComponent("Loaded path '" + pathArg + "' successfully!"), Util.NIL_UUID);
@@ -274,6 +284,16 @@ public class CMDCamClient {
                                 }
                                 return 0;
                             })))
+                    .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("reload").executes((x) -> {
+                            if (CMDCamClient.isInstalledOnSever) {
+                                // Ignoring
+                                System.out.println("Server mode - ignoring reload...");
+                            } else {
+                                CMDCamClient.storage.load();
+                                mc.player.sendMessage(new TextComponent("Reloaded successfully!"), Util.NIL_UUID);
+                            }
+                            return 0;
+                        }))
                     .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("save")
                             .then(RequiredArgumentBuilder.<SharedSuggestionProvider, String>argument("path", StringArgumentType.string()).executes((x) -> {
                                 String pathArg = StringArgumentType.getString(x, "path");
@@ -283,14 +303,30 @@ public class CMDCamClient {
                                     if (CMDCamClient.isInstalledOnSever) {
                                         CMDCam.NETWORK.sendToServer(new SetPathPacket(pathArg, path));
                                     } else {
-                                        CMDCamClient.savedPaths.put(pathArg, path);
+                                        CMDCamClient.storage.paths.put(pathArg, path);
+                                        CMDCamClient.storage.save();
                                         mc.player.sendMessage(new TextComponent("Saved path '" + pathArg + "' successfully!"), Util.NIL_UUID);
                                     }
                                 } catch (PathParseException e) {
                                     mc.player.sendMessage(new TextComponent(e.getMessage()), Util.NIL_UUID);
                                 }
                                 return 0;
-                            }))));
+                            })))
+                    .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("gui")
+                            .then(RequiredArgumentBuilder.<SharedSuggestionProvider, Boolean>argument("show", BoolArgumentType.bool()).executes((x) -> {
+                                boolean enabled = BoolArgumentType.getBool(x, "show");
+                                CMDCamClient.enableGuiOnTravel = enabled;
+                                mc.player.sendMessage(new TextComponent("GUI shown on travel:  '" + enabled + "'"), Util.NIL_UUID);
+                                return 0;
+                            })))
+                    .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("mouse")
+                            .then(RequiredArgumentBuilder.<SharedSuggestionProvider, Boolean>argument("lock", BoolArgumentType.bool()).executes((x) -> {
+                                boolean enabled = BoolArgumentType.getBool(x, "lock");
+                                CMDCamClient.grabMouseOnTravel = enabled;
+                                mc.player.sendMessage(new TextComponent("Mouse locked on travel:  '" + enabled + "'"), Util.NIL_UUID);
+                                return 0;
+                            })))
+            );
         });
         
     }

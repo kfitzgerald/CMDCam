@@ -19,7 +19,7 @@ public class CamPoint {
     
     public double roll;
     public double zoom;
-    
+
     public CamPoint(double x, double y, double z, double rotationYaw, double rotationPitch, double roll, double zoom) {
         this.x = x;
         this.y = y;
@@ -43,15 +43,26 @@ public class CamPoint {
     @OnlyIn(Dist.CLIENT)
     public CamPoint() {
         Minecraft mc = Minecraft.getInstance();
-        this.x = mc.player.getX();
-        this.y = mc.player.getEyeY();
-        this.z = mc.player.getZ();
-        
-        this.rotationYaw = mc.player.getYRot();
-        this.rotationPitch = mc.player.getXRot();
-        
-        this.roll = CamEventHandlerClient.roll;
-        this.zoom = CamEventHandlerClient.currentFOV;
+        //noinspection ConstantConditions
+        if (mc != null && mc.player != null) {
+            this.x = mc.player.getX();
+            this.y = mc.player.getEyeY();
+            this.z = mc.player.getZ();
+
+            this.rotationYaw = mc.player.getYRot();
+            this.rotationPitch = mc.player.getXRot();
+
+            this.roll = CamEventHandlerClient.roll;
+            this.zoom = CamEventHandlerClient.currentFOV;
+        } else {
+            this.x = 0;
+            this.y = 0;
+            this.z = 0;
+            this.rotationYaw = 0;
+            this.rotationPitch = 0;
+            this.roll = 0;
+            this.zoom = 0;
+        }
     }
     
     public CamPoint getPointBetween(CamPoint point, double percent) {

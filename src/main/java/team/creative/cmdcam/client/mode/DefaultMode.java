@@ -3,6 +3,7 @@ package team.creative.cmdcam.client.mode;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import team.creative.cmdcam.client.CMDCamClient;
 import team.creative.cmdcam.common.util.CamPath;
 import team.creative.cmdcam.common.util.CamPoint;
 import team.creative.cmdcam.common.util.CamTarget.SelfTarget;
@@ -34,7 +35,9 @@ public class DefaultMode extends CamMode {
         
         //double mouseX = mc.getWindow().getWidth() / 2;
         //double mouseY = mc.getWindow().getHeight() / 2;
-        mc.mouseHandler.grabMouse();
+        if (CMDCamClient.grabMouseOnTravel) {
+            mc.mouseHandler.grabMouse();
+        }
         //InputConstants.grabOrReleaseMouse(mc.getWindow().getWindow(), 212995, mouseX, mouseY);
         
         mc.player.getAbilities().flying = true;

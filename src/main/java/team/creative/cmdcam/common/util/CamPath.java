@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -16,7 +17,7 @@ import team.creative.cmdcam.client.interpolation.CamInterpolation;
 import team.creative.cmdcam.client.mode.CamMode;
 
 public class CamPath {
-    
+
     public int loop;
     public long duration;
     public String mode;
@@ -24,6 +25,7 @@ public class CamPath {
     public CamTarget target;
     public List<CamPoint> points;
     public double cameraFollowSpeed;
+    @Exclude
     public boolean serverPath = false;
     
     public CamPath(CompoundTag nbt) {
@@ -76,18 +78,28 @@ public class CamPath {
         CMDCamClient.points = new ArrayList<>(this.points);
         CMDCamClient.cameraFollowSpeed = this.cameraFollowSpeed;
     }
-    
+
+    @Exclude
     @OnlyIn(Dist.CLIENT)
     private boolean hideGui;
+
+    @Exclude
     @OnlyIn(Dist.CLIENT)
     public CamInterpolation cachedInterpolation;
+
+    @Exclude
     @OnlyIn(Dist.CLIENT)
     public CamMode cachedMode;
-    
+
+    @Exclude
     public long timeStarted = System.currentTimeMillis();
+    @Exclude
     public int currentLoop;
+    @Exclude
     private boolean finished;
+    @Exclude
     private boolean running;
+    @Exclude
     public List<CamPoint> tempPoints;
     
     public void start(Level level) throws PathParseException {
@@ -110,8 +122,11 @@ public class CamPath {
             
             this.cachedInterpolation = CamInterpolation.getInterpolationOrDefault(interpolation);
             this.cachedInterpolation.initMovement(tempPoints, loop, target);
-            
-            this.hideGui = Minecraft.getInstance().options.hideGui;
+
+            // Only hide/restore gui state if option is enabled
+            if (!CMDCamClient.enableGuiOnTravel) {
+                this.hideGui = Minecraft.getInstance().options.hideGui;
+            }
         }
     }
     
@@ -127,8 +142,11 @@ public class CamPath {
             
             this.cachedMode = null;
             this.cachedInterpolation = null;
-            
-            Minecraft.getInstance().options.hideGui = hideGui;
+
+            // Only hide/restore gui state if option is enabled
+            if (!CMDCamClient.enableGuiOnTravel) {
+                Minecraft.getInstance().options.hideGui = hideGui;
+            }
         }
     }
     
@@ -141,8 +159,10 @@ public class CamPath {
             } else
                 finish(level);
         } else {
-            if (level.isClientSide)
+            // Only hide/restore gui state if option is enabled
+            if (!CMDCamClient.enableGuiOnTravel && level.isClientSide) {
                 Minecraft.getInstance().options.hideGui = true;
+            }
             
             long durationOfPoint = duration / (tempPoints.size() - 1);
             int currentPoint = Math.min((int) (time / durationOfPoint), tempPoints.size() - 2);
