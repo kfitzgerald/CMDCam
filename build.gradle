@@ -13,7 +13,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.5.25-KMF-1.18'
+version = '1.5.28-KMF-1.18.2'
 group = 'events.madzoo.cmdcam' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'CMDCam'
 
@@ -136,7 +136,7 @@ dependencies {
     // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft', it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    minecraft 'net.minecraftforge:forge:1.18.1-39.0.0'
+    minecraft 'net.minecraftforge:forge:1.18.2-40.0.49'
 
     // Real mod deobf dependency examples - these get remapped to your current mappings
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}:api") // Adds JEI API as a compile dependency
@@ -149,7 +149,7 @@ dependencies {
     // For more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
-    implementation files('lib/CreativeCore_v2.3.0_mc1.18.jar')
+    implementation files('lib/CreativeCore_FORGE_v2.6.8_mc1.18.2.jar')
 
 //    implementation 'org.yaml:snakeyaml:1.29'
     extraLibs 'org.yaml:snakeyaml:1.29'
