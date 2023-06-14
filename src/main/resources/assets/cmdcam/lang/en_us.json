@@ -54,6 +54,8 @@
     "scene.interpolation.show": "Showing %s interpolation",
     "scene.interpolation.hide_all": "Hiding all interpolations",
     "scene.interpolation.hide": "Hiding %s interpolation",
+    "scene.gui": "Set gui enabled to %s",
+    "scene.mouse": "Set grab mouse on travel to %s",
     "scenes.list_fail": "Use /cam-server list instead",
     "scenes.list": "There are %s scene(s): %s",
     "scenes.clear": "Removed all existing scenes (in this world)"

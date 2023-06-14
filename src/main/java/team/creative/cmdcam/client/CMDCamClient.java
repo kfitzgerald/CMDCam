@@ -3,6 +3,7 @@ package team.creative.cmdcam.client;
 import java.util.HashMap;
 import java.util.List;
 
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
@@ -35,14 +36,16 @@ public class CMDCamClient {
     
     public final static Minecraft mc = Minecraft.getInstance();
     public static final CamCommandProcessorClient PROCESSOR = new CamCommandProcessorClient();
-    public static final HashMap<String, CamScene> SCENES = new HashMap<>();
-    
+//    public static final HashMap<String, CamScene> SCENES = new HashMap<>();
+
     private static final CamScene scene = CamScene.createDefault();
     private static CamScene playing;
     private static boolean serverAvailable = false;
     private static boolean hideGuiCache;
     private static boolean hasTargetMarker;
     private static CamPoint targetMarker;
+
+    public static ClientConfiguration storage = new ClientConfiguration();
     
     public static void resetServerAvailability() {
         serverAvailable = false;
@@ -54,6 +57,7 @@ public class CMDCamClient {
     
     public static void init(FMLClientSetupEvent event) {
         MinecraftForge.EVENT_BUS.register(new CamEventHandlerClient());
+        reloadConfigFromDisk();
         CreativeCoreClient.registerClientConfig(CMDCam.MODID);
         ModLoadingContext.get()
                 .registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
@@ -63,6 +67,14 @@ public class CMDCamClient {
         bus.addListener(CMDCamClient::init);
         MinecraftForge.EVENT_BUS.addListener(CMDCamClient::commands);
         bus.addListener(KeyHandler::registerKeys);
+    }
+
+    public static void reloadConfigFromDisk() {
+        if (CMDCamClient.serverAvailable) {
+            return;
+        }
+
+        storage.load();
     }
     
     public static void commands(RegisterClientCommandsEvent event) {
@@ -80,6 +92,9 @@ public class CMDCamClient {
             return 0;
         })).then(Commands.literal("resume").executes(x -> {
             CMDCamClient.resume();
+            return 0;
+        })).then(Commands.literal("reload").executes(x -> {
+            reloadConfigFromDisk();
             return 0;
         })).then(Commands.literal("show").then(Commands.argument("interpolation", InterpolationArgument.interpolationAll()).executes((x) -> {
             String interpolation = StringArgumentType.getString(x, "interpolation");
@@ -108,14 +123,14 @@ public class CMDCamClient {
                 x.getSource().sendFailure(Component.translatable("scenes.list_fail"));
                 return 0;
             }
-            x.getSource().sendSuccess(Component.translatable("scenes.list", SCENES.size(), String.join(", ", SCENES.keySet())), true);
+            x.getSource().sendSuccess(Component.translatable("scenes.list", storage.scenes.size(), String.join(", ", storage.scenes.keySet())), true);
             return 0;
         })).then(Commands.literal("load").then(Commands.argument("path", StringArgumentType.string()).executes((x) -> {
             String pathArg = StringArgumentType.getString(x, "path");
             if (CMDCamClient.serverAvailable)
                 CMDCam.NETWORK.sendToServer(new GetPathPacket(pathArg));
             else {
-                CamScene scene = CMDCamClient.SCENES.get(pathArg);
+                CamScene scene = CMDCamClient.storage.scenes.get(pathArg);
                 if (scene != null) {
                     set(scene);
                     x.getSource().sendSuccess(Component.translatable("scenes.load", pathArg), false);
@@ -131,7 +146,7 @@ public class CMDCamClient {
                 if (CMDCamClient.serverAvailable)
                     CMDCam.NETWORK.sendToServer(new SetPathPacket(pathArg, scene));
                 else {
-                    CMDCamClient.SCENES.put(pathArg, scene);
+                    CMDCamClient.storage.scenes.put(pathArg, scene);
                     x.getSource().sendSuccess(Component.translatable("scenes.save", pathArg), false);
                 }
             } catch (SceneException e) {
@@ -188,7 +203,9 @@ public class CMDCamClient {
     public static void pause() {
         if (playing != null)
             playing.pause();
-        mc.options.hideGui = hideGuiCache;
+        if (!scene.enableGuiOnTravel) {
+            mc.options.hideGui = hideGuiCache;
+        }
     }
     
     public static void resume() {
@@ -203,7 +220,9 @@ public class CMDCamClient {
             return;
         playing.finish(mc.level);
         playing = null;
-        mc.options.hideGui = hideGuiCache;
+        if (!scene.enableGuiOnTravel) {
+            mc.options.hideGui = hideGuiCache;
+        }
     }
     
     public static void stopServer() {
@@ -211,7 +230,9 @@ public class CMDCamClient {
             return;
         playing.finish(mc.level);
         playing = null;
-        mc.options.hideGui = hideGuiCache;
+        if (!scene.enableGuiOnTravel) {
+            mc.options.hideGui = hideGuiCache;
+        }
     }
     
     public static void noTickPath(Level level, float renderTickTime) {
@@ -225,7 +246,9 @@ public class CMDCamClient {
     public static void tickPath(Level level, float renderTickTime) {
         playing.tick(level, renderTickTime);
         if (!playing.playing()) {
-            mc.options.hideGui = hideGuiCache;
+            if (!scene.enableGuiOnTravel) {
+                mc.options.hideGui = hideGuiCache;
+            }
             playing = null;
         }
     }

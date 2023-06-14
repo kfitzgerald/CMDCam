@@ -59,6 +59,10 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     
     implementation project(':CreativeLoaderForge')
+
+
+    compileOnly 'org.yaml:snakeyaml:1.29'
+    compileOnly 'com.google.code.gson:gson:2.8.8'
 }
 
 jar {

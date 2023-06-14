@@ -23,7 +23,9 @@ public class DefaultMode extends CamMode {
     @OnlyIn(Dist.CLIENT)
     public void process(CamPoint point) {
         super.process(point);
-        Minecraft.getInstance().mouseHandler.grabMouse();
+        if (scene.grabMouseOnTravel) {
+            Minecraft.getInstance().mouseHandler.grabMouse();
+        }
     }
     
     @Override

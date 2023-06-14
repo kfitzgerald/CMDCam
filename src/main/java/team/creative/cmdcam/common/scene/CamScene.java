@@ -10,6 +10,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import team.creative.cmdcam.client.ClientConfiguration;
+import team.creative.cmdcam.client.Exclude;
 import team.creative.cmdcam.common.math.follow.CamFollowConfig;
 import team.creative.cmdcam.common.math.interpolation.CamInterpolation;
 import team.creative.cmdcam.common.math.interpolation.CamPitchMode;
@@ -29,23 +31,32 @@ public class CamScene {
     public static CamScene createDefault() {
         return new CamScene(10000, 0, "default", new ArrayList<>(), CamInterpolation.HERMITE);
     }
-    
+
+    @Exclude
     private boolean started = false;
-    
+
+    @Exclude
     private boolean serverSynced = false;
     
     public long duration;
     public int loop = 0;
-    
+
+    @Exclude
     public CamMode mode;
+    @Exclude
     public CamInterpolation interpolation;
-    
+
+    @Exclude
     public CamTarget lookTarget;
+    @Exclude
     public CamFollowConfig<Vec1d> pitchFollowConfig = new CamFollowConfig<>(CamAttribute.PITCH, 10);
+    @Exclude
     public CamFollowConfig<Vec1d> yawFollowConfig = new CamFollowConfig<>(CamAttribute.YAW, 10);
     
     /** if null it will be the same as the lookTarget */
+    @Exclude
     public CamTarget posTarget;
+    @Exclude
     public CamFollowConfig<Vec3d> posFollowConfig = new CamFollowConfig<>(CamAttribute.POSITION, 2);
     
     //public boolean targetBodyRotation = false;
@@ -56,9 +67,13 @@ public class CamScene {
     public boolean smoothBeginning = true;
     public CamPitchMode pitchMode = CamPitchMode.FIX_KEEP_DIRECTION;
     public boolean distanceBasedTiming = false;
-    
+
+    @Exclude
     @OnlyIn(Dist.CLIENT)
     public CamRun run;
+
+    public boolean enableGuiOnTravel = true;
+    public boolean grabMouseOnTravel = false;
     
     public CamScene(long duration, int loop, String mode, List<CamPoint> points, CamInterpolation interpolation) {
         this.duration = duration;

@@ -121,8 +121,10 @@ public class CamRun {
                 }
             }
         }
-        
-        mc.options.hideGui = true;
+
+        if (!scene.enableGuiOnTravel) {
+            mc.options.hideGui = true;
+        }
         scene.mode.process(stage.calculatePoint(level, time, deltaTime));
     }
     

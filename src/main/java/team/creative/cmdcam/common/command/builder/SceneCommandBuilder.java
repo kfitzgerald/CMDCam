@@ -146,6 +146,22 @@ public class SceneCommandBuilder {
             x.getSource().sendSuccess(Component.translatable("scene.distance_timing", value), false);
             return 0;
         })));
+
+        origin.then(Commands.literal("gui").then(Commands.argument("value", BoolArgumentType.bool()).executes((x) -> {
+            boolean value = BoolArgumentType.getBool(x, "value");
+            processor.getScene(x).enableGuiOnTravel = value;
+            processor.markDirty(x);
+            x.getSource().sendSuccess(Component.translatable("scene.gui", value), false);
+            return 0;
+        })));
+
+        origin.then(Commands.literal("mouse").then(Commands.argument("value", BoolArgumentType.bool()).executes((x) -> {
+            boolean value = BoolArgumentType.getBool(x, "value");
+            processor.getScene(x).grabMouseOnTravel = value;
+            processor.markDirty(x);
+            x.getSource().sendSuccess(Component.translatable("scene.mouse", value), false);
+            return 0;
+        })));
         
         if (processor.requiresSceneName())
             original.then(origin);
